@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 Stock Tracker – Theo Nhóm Ngành</title>
+<style>
+:root {
+  --bg:#0d1117; --surf:#161b22; --surf2:#21262d; --bd:#30363d;
+  --tx:#e6edf3; --muted:#8b949e;
+  --green:#3fb950; --gbg:#1a3a24; --gbd:rgba(63,185,80,.35);
+  --red:#f85149;   --rbg:#3d1a1a; --rbd:rgba(248,81,73,.35);
+  --yel:#d29922;   --ybg:#3d2e00; --ybd:rgba(210,153,34,.35);
+  --blue:#58a6ff;  --bbg:#0d2044; --bbd:rgba(88,166,255,.35);
+  --r:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px}
+
+/* Header */
+.hdr{background:var(--surf);border-bottom:1px solid var(--bd);padding:11px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:200;gap:10px;flex-wrap:wrap}
+.hdr-l{display:flex;align-items:center;gap:10px}
+.hdr h1{font-size:16px;font-weight:700;white-space:nowrap}
+.mkt{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.mkt-o{background:var(--gbg);color:var(--green)}
+.mkt-c{background:var(--rbg);color:var(--red)}
+.mkt-prev{background:var(--ybg);color:var(--yel);font-size:10px}
+.hdr-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ts{color:var(--muted);font-size:11px;white-space:nowrap}
+.btn{background:var(--surf2);border:1px solid var(--bd);color:var(--tx);
+  padding:5px 13px;border-radius:var(--r);cursor:pointer;font-size:12px;transition:.15s}
+.btn:hover{background:var(--bd)}
+.btn-p{background:var(--blue);border-color:var(--blue);color:#0d1117;font-weight:700}
+.btn-p:hover{background:#79b8ff}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* Layout */
+.wrap{padding:14px 18px;max-width:1900px;margin:0 auto}
+
+/* Section header */
+.sh{display:flex;align-items:center;gap:10px;margin:20px 0 12px;padding-bottom:8px;
+  border-bottom:2px solid var(--bd)}
+.step{background:var(--blue);color:#0d1117;padding:2px 10px;border-radius:20px;
+  font-size:11px;font-weight:800;white-space:nowrap}
+.step-mon{background:var(--yel)!important}
+.sh h2{font-size:15px;font-weight:700}
+.sh-sub{color:var(--muted);font-size:12px}
+
+/* Progress */
+.prog-area{margin-bottom:12px}
+.prog-txt{color:var(--muted);font-size:11px;text-align:right;margin-bottom:4px}
+.prog-wrap{background:var(--surf2);border-radius:20px;height:4px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));
+  border-radius:20px;transition:width .4s}
+
+/* Error */
+.err{background:var(--rbg);border:1px solid var(--red);border-radius:var(--r);
+  padding:10px 14px;margin-bottom:12px;color:var(--red);display:none;font-size:12px}
+
+/* ── MONITORING ── */
+.mon-wrap{background:var(--surf);border:1px solid var(--bd);border-radius:var(--r);
+  padding:14px 16px;margin-bottom:4px}
+.mon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:12px}
+.mon-card{background:var(--surf2);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;position:relative}
+.mon-ticker{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:1px}
+.mon-name{font-size:10px;color:var(--muted);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mon-price{font-size:20px;font-weight:800;margin-bottom:1px}
+.mon-chg{font-size:12px;font-weight:600;margin-bottom:6px}
+.mon-level{font-size:12px;font-weight:700;margin-bottom:2px}
+.mon-ldesc{font-size:10px;color:var(--muted)}
+.mon-sum{display:flex;gap:10px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--bd)}
+.mon-stat{flex:1;min-width:175px;background:var(--surf2);border:1px solid var(--bd);
+  border-radius:var(--r);padding:10px 14px}
+.mon-slbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.mon-sval{font-size:14px;font-weight:700;margin-bottom:3px}
+.mon-sdesc{font-size:11px;color:var(--muted);line-height:1.4}
+
+/* B12 Grid */
+.b12-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:10px;margin-bottom:4px}
+.b12-card{background:var(--surf);border:1px solid var(--bd);border-radius:var(--r);
+  padding:12px 14px;transition:.15s;position:relative;overflow:hidden}
+.b12-card:hover{border-color:var(--blue)}
+.b12-type{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.b12-sym{font-size:16px;font-weight:800;color:var(--blue)}
+.b12-name{font-size:10px;color:var(--muted);margin:2px 0 8px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.b12-price{font-size:18px;font-weight:700}
+.b12-chg{font-size:12px;font-weight:600;margin-bottom:8px}
+.b12-meta{display:flex;gap:5px;flex-wrap:wrap}
+.b12-tag{font-size:10px;padding:2px 7px;border-radius:4px;
+  background:var(--surf2);color:var(--muted)}
+.b12-sig{position:absolute;top:10px;right:10px}
+.b12-prev-tag{position:absolute;bottom:8px;right:8px;
+  font-size:9px;background:var(--ybg);color:var(--yel);
+  padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:.3px}
+
+/* ETF Table */
+.etf-wrap{background:var(--surf);border:1px solid var(--bd);border-radius:var(--r);
+  overflow:auto;margin-bottom:4px}
+.etf-tbl{width:100%;border-collapse:collapse}
+.etf-tbl th{padding:8px 12px;background:var(--surf2);text-align:left;color:var(--muted);
+  font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+  border-bottom:1px solid var(--bd);white-space:nowrap}
+.etf-tbl td{padding:8px 12px;border-bottom:1px solid rgba(48,54,61,.5);
+  white-space:nowrap;vertical-align:middle}
+.etf-tbl tr:last-child td{border-bottom:none}
+.etf-tbl tr:hover td{background:rgba(255,255,255,.02)}
+.sc{display:flex;flex-direction:column;gap:1px}
+.sm{font-weight:700;color:var(--blue);font-size:13px}
+.ss{color:var(--muted);font-size:10px}
+.num{text-align:right}
+
+/* Sector accordion */
+.sec-card{background:var(--surf);border:1px solid var(--bd);border-radius:var(--r);
+  margin-bottom:8px;overflow:hidden}
+.sec-card.sec-buy{border-color:var(--gbd)}
+.sec-card.sec-sell{border-color:var(--rbd)}
+.sec-card.sec-hold{border-color:var(--bbd)}
+
+.sec-hd{padding:12px 16px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;user-select:none;transition:.15s}
+.sec-hd:hover{background:rgba(255,255,255,.02)}
+.sec-ico{font-size:20px;flex-shrink:0}
+.sec-ttl{flex:1}
+.sec-ttl h3{font-size:14px;font-weight:700}
+.sec-ttl p{font-size:11px;color:var(--muted);margin-top:1px}
+.sec-etf{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.etf-chip{background:var(--surf2);border:1px solid var(--bd);border-radius:20px;
+  padding:3px 10px;font-size:11px;font-weight:700;color:var(--blue)}
+.auto-lbl{color:var(--green);font-size:11px}
+.chev{color:var(--muted);font-size:16px;transition:.3s;flex-shrink:0}
+.chev.open{transform:rotate(90deg)}
+
+.sec-body{display:none;padding:0 12px 12px}
+.sec-body.exp{display:block}
+
+/* Collapsed hint */
+.coll-hint{display:flex;align-items:center;gap:8px;padding:8px 12px;
+  background:rgba(0,0,0,.2);border-radius:var(--r);margin-top:8px;
+  color:var(--muted);font-size:12px;border:1px solid var(--bd)}
+
+/* Stock table */
+.stbl-wrap{background:var(--surf2);border:1px solid var(--bd);border-radius:var(--r);
+  overflow:auto;margin-top:8px;max-height:500px}
+.stbl{width:100%;border-collapse:collapse}
+.stbl th{padding:7px 10px;background:rgba(0,0,0,.3);text-align:left;color:var(--muted);
+  font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+  border-bottom:1px solid var(--bd);white-space:nowrap;position:sticky;top:0}
+.stbl th.num{text-align:right}
+.stbl td{padding:7px 10px;border-bottom:1px solid rgba(48,54,61,.4);
+  vertical-align:middle;white-space:nowrap}
+.stbl tr:last-child td{border-bottom:none}
+.stbl tr:hover td{background:rgba(255,255,255,.025)}
+.sub-lbl{color:var(--muted);font-size:10px}
+.idx{color:var(--muted);font-size:11px;text-align:right;width:24px}
+
+/* Common */
+.up{color:var(--green)}.down{color:var(--red)}.neu{color:var(--muted)}
+.pv{font-weight:700;font-size:13px}
+
+/* Signal — 3-signal system: BUY(green) HOLD(blue) SELL(red) */
+.sig{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;
+  border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.4px;white-space:nowrap}
+.sig-BUY  {background:var(--gbg);color:var(--green);border:1px solid var(--gbd)}
+.sig-SELL {background:var(--rbg);color:var(--red);  border:1px solid var(--rbd)}
+.sig-HOLD {background:var(--bbg);color:var(--blue); border:1px solid var(--bbd)}
+.sig-LOAD {color:var(--muted);border:1px dashed var(--bd)}
+
+/* RSI bar */
+.rw{display:flex;align-items:center;gap:5px;justify-content:flex-end}
+.rn{width:26px;font-weight:700;text-align:right;font-size:11px}
+.rb{width:44px;height:4px;background:var(--surf);border-radius:2px;overflow:hidden;flex-shrink:0}
+.rf{height:100%;border-radius:2px}
+.rlo{background:var(--green)}.rmi{background:var(--muted)}.rhi{background:var(--red)}
+
+/* Score */
+.scr{font-weight:800;font-size:14px}
+.sp{color:var(--green)}.sn{color:var(--red)}.sz{color:var(--blue)}
+
+/* Spinner */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;width:11px;height:11px;
+  border:2px solid var(--bd);border-top-color:var(--blue);
+  border-radius:50%;animation:spin .8s linear infinite}
+
+/* Empty */
+.empty{text-align:center;padding:30px;color:var(--muted)}
+
+/* Footer */
+.footer{margin-top:16px;color:var(--muted);font-size:11px;text-align:center;line-height:1.8}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surf2)}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-l">
+    <h1>📊 US Stock Tracker</h1>
+    <span style="color:var(--muted);font-size:12px">Phân tích theo nhóm ngành</span>
+    <span id="mktStatus" class="mkt">…</span>
+    <span id="prevPriceNote" class="mkt mkt-prev" style="display:none">📋 Giá đóng cửa phiên cuối</span>
+  </div>
+  <div class="hdr-r">
+    <span class="ts" id="lastUpdate">Chưa tải</span>
+    <button class="btn btn-p" id="btnRefresh" onclick="startRefresh()">🔄 Làm mới</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="err" id="errBanner"></div>
+
+  <!-- Progress -->
+  <div class="prog-area" id="progArea" style="display:none">
+    <div class="prog-txt">Đang tải dữ liệu…</div>
+    <div class="prog-wrap"><div class="prog-fill" id="progFill" style="width:100%;animation:none;background:var(--blue)"></div></div>
+  </div>
+
+  <!-- ═══ MONITORING ═══ -->
+  <div class="sh">
+    <span class="step step-mon">MONITORING</span>
+    <h2>THEO DÕI RỦI RO THỊ TRƯỜNG</h2>
+    <span class="sh-sub">VIX Spot (30d) • VXMT (93d) • Futures Curve • Risk Level</span>
+  </div>
+  <div id="monCont">
+    <div class="mon-wrap"><div class="empty"><span class="spin"></span>&nbsp;Đang tải VIX…</div></div>
+  </div>
+
+  <!-- ═══ BƯỚC 1 ═══ -->
+  <div class="sh">
+    <span class="step">BƯỚC 1</span>
+    <h2>BẢNG 12 – TỔNG QUAN THỊ TRƯỜNG</h2>
+    <span class="sh-sub">Chỉ số rộng • ETF hàng hóa • ETF quốc tế</span>
+  </div>
+  <div class="b12-grid" id="b12Grid">
+    <div class="empty"><span class="spin"></span>&nbsp;Đang tải…</div>
+  </div>
+
+  <!-- ═══ BƯỚC 2 ═══ -->
+  <div class="sh">
+    <span class="step">BƯỚC 2</span>
+    <h2>BẢNG TỔNG HỢP ETF THEO NHÓM NGÀNH</h2>
+    <span class="sh-sub">12 Sector ETF đại diện • BUY → xem chi tiết ở Bước 3</span>
+  </div>
+  <div class="etf-wrap">
+    <table class="etf-tbl">
+      <thead>
+        <tr>
+          <th>Nhóm ngành</th>
+          <th>ETF</th>
+          <th class="num">Giá</th>
+          <th class="num">1D %</th>
+          <th class="num">1W %</th>
+          <th class="num">1M %</th>
+          <th class="num">RSI</th>
+          <th class="num">MACD</th>
+          <th class="num">Score</th>
+          <th>Tín hiệu</th>
+        </tr>
+      </thead>
+      <tbody id="etfTbody">
+        <tr><td colspan="10" class="empty"><span class="spin"></span>&nbsp;Đang tải…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══ BƯỚC 3 ═══ -->
+  <div class="sh">
+    <span class="step">BƯỚC 3</span>
+    <h2>CHI TIẾT TỪNG NGÀNH</h2>
+    <span class="sh-sub">Tự động mở khi ETF = BUY / HOLD • Nhấp tiêu đề để mở/đóng thủ công</span>
+  </div>
+  <div id="secCont">
+    <div class="empty"><span class="spin"></span>&nbsp;Đang tải dữ liệu…</div>
+  </div>
+
+  <div class="footer">
+    Dữ liệu: Yahoo Finance (qua GitHub Actions) &bull; RSI(14) &bull; MACD(12,26,9) &bull; EMA(50,200) &bull; ADX(14) &bull; Volume/65d
+    &bull; BUY ≥ +3.0 &bull; SELL ≤ −3.0 &bull; HOLD = giữa &bull;
+    Cập nhật mỗi 15 phút trong giờ giao dịch &bull; Chỉ mang tính tham khảo, không phải lời khuyên đầu tư
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════
+
+const VIX_TICKERS = [
+  {sym:'^VIX',  disp:'VIX',  name:'CBOE Volatility Index (30-day)', role:'spot'},
+  {sym:'^VXMT', disp:'VXMT', name:'CBOE Mid-Term Volatility (93-day)', role:'mterm'},
+  {sym:'VIXY',  disp:'VIXY', name:'ProShares VIX Short-Term Futures ETF', role:'futures'},
+];
+
+const TABLE12 = [
+  {sym:'SPY',  disp:'SPY',    name:'SPDR S&P 500 ETF',           type:'ETF Index'},
+  {sym:'QQQ',  disp:'QQQ',    name:'Invesco QQQ (Nasdaq 100)',    type:'ETF Index'},
+  {sym:'^DJI', disp:'US30',   name:'Dow Jones Indus. Average',    type:'Index'},
+  {sym:'^HSI', disp:'HK50',   name:'Hang Seng Index',             type:'Index'},
+  {sym:'TQQQ', disp:'TQQQ',   name:'ProShares UltraPro QQQ 3x',  type:'Leveraged ETF'},
+  {sym:'GLD',  disp:'GLD',    name:'SPDR Gold Shares',            type:'Commodity ETF'},
+  {sym:'SLV',  disp:'SLV',    name:'iShares Silver Trust',        type:'Commodity ETF'},
+  {sym:'PALL', disp:'PALL',   name:'Physical Palladium ETF',      type:'Commodity ETF'},
+  {sym:'USO',  disp:'USO',    name:'United States Oil Fund',      type:'Commodity ETF'},
+  {sym:'COPX', disp:'COPX',   name:'Global X Copper Miners ETF',  type:'Commodity ETF'},
+  {sym:'EWJ',  disp:'EWJ',    name:'iShares MSCI Japan ETF',      type:'Country ETF'},
+  {sym:'EWY',  disp:'EWY',    name:'iShares MSCI South Korea',    type:'Country ETF'},
+  {sym:'IEFA', disp:'IEFA',   name:'iShares MSCI EAFE ETF',       type:'Intl ETF'},
+];
+
+const SECTOR_ETFS = [
+  {sym:'XLE',  sId:'energy',     icon:'⛽', sname:'NĂNG LƯỢNG',                  name:'Energy Select Sector'},
+  {sym:'XLI',  sId:'industrial', icon:'🏭', sname:'CÔNG NGHIỆP',                 name:'Industrial Select Sector'},
+  {sym:'XLB',  sId:'materials',  icon:'⛏️', sname:'VẬT LIỆU & KHAI KHOÁNG',      name:'Materials Select Sector'},
+  {sym:'XLK',  sId:'tech',       icon:'💻', sname:'CÔNG NGHỆ',                   name:'Technology Select Sector'},
+  {sym:'XLF',  sId:'finance',    icon:'🏦', sname:'TÀI CHÍNH & CRYPTO',          name:'Financial Select Sector'},
+  {sym:'XLV',  sId:'health',     icon:'🏥', sname:'Y TẾ',                        name:'Health Care Select Sector'},
+  {sym:'XLY',  sId:'consDisc',   icon:'🛍️', sname:'TIÊU DÙNG KHÔNG THIẾT YẾU',  name:'Consumer Disc. Sector'},
+  {sym:'XLP',  sId:'consStap',   icon:'🛒', sname:'TIÊU DÙNG THIẾT YẾU',         name:'Consumer Staples Sector'},
+  {sym:'XLC',  sId:'comm',       icon:'📡', sname:'TRUYỀN THÔNG',                name:'Communication Services'},
+  {sym:'XLU',  sId:'utilities',  icon:'💡', sname:'TIỆN ÍCH',                    name:'Utilities Select Sector'},
+  {sym:'XLRE', sId:'realestate', icon:'🏢', sname:'BẤT ĐỘNG SẢN',               name:'Real Estate Select Sector'},
+  {sym:'SPY',  sId:'etfindex',   icon:'📊', sname:'ETF & CHỈ SỐ (BẢNG 12)',      name:'SPDR S&P 500 ETF'},
+];
+
+const SECTORS = [
+  {id:'energy',    icon:'⛽', name:'NĂNG LƯỢNG',                 nameEn:'Energy',                  etf:'XLE',  alt:'USO',
+    stocks:[
+      {s:'CVX', n:'Chevron Corporation',       b:'Dầu khí tích hợp'},
+      {s:'XOM', n:'Exxon Mobil Corporation',   b:'Dầu khí tích hợp'},
+      {s:'COP', n:'ConocoPhillips',            b:'Dầu khí E&P'},
+      {s:'OXY', n:'Occidental Petroleum',      b:'Dầu khí'},
+      {s:'PBR', n:'Petrobras (Brazil)',         b:'Dầu khí quốc doanh'},
+      {s:'SLB', n:'Schlumberger',              b:'Dịch vụ dầu khí'},
+      {s:'CEG', n:'Constellation Energy',      b:'Năng lượng hạt nhân'},
+      {s:'GEV', n:'GE Vernova',                b:'Năng lượng tái tạo'},
+      {s:'ENPH',n:'Enphase Energy',            b:'Năng lượng mặt trời'},
+      {s:'USO', n:'US Oil Fund ETF',           b:'ETF dầu'},
+    ]},
+  {id:'industrial',icon:'🏭', name:'CÔNG NGHIỆP',                nameEn:'Industrials',             etf:'XLI',  alt:'—',
+    stocks:[
+      {s:'CAT', n:'Caterpillar Inc.',          b:'Máy móc hạng nặng'},
+      {s:'UNP', n:'Union Pacific',             b:'Đường sắt'},
+      {s:'GE',  n:'GE Aerospace',              b:'Hàng không & quốc phòng'},
+      {s:'RTX', n:'RTX Corporation',           b:'Quốc phòng'},
+      {s:'LMT', n:'Lockheed Martin',           b:'Quốc phòng'},
+      {s:'BA',  n:'Boeing Company',            b:'Hàng không'},
+      {s:'HON', n:'Honeywell International',   b:'Công nghệ & hàng không'},
+      {s:'MMM', n:'3M Company',                b:'Công nghiệp đa ngành'},
+      {s:'DE',  n:'Deere & Company',           b:'Máy nông nghiệp'},
+      {s:'VRT', n:'Vertiv Holdings',           b:'Hạ tầng data center'},
+      {s:'UBER',n:'Uber Technologies',         b:'Vận tải công nghệ'},
+      {s:'AAL', n:'American Airlines Group',   b:'Hàng không'},
+      {s:'RKLB',n:'Rocket Lab USA',            b:'Không gian'},
+      {s:'LUNR',n:'Intuitive Machines',        b:'Không gian'},
+      {s:'ASTS',n:'AST SpaceMobile',           b:'Vệ tinh'},
+      {s:'ACHR',n:'Archer Aviation',           b:'Taxi bay eVTOL'},
+    ]},
+  {id:'materials', icon:'⛏️', name:'VẬT LIỆU & KHAI KHOÁNG',     nameEn:'Materials & Mining',      etf:'XLB',  alt:'COPX/GLD/SLV',
+    stocks:[
+      {s:'LIN', n:'Linde plc',                b:'Khí công nghiệp'},
+      {s:'FCX', n:'Freeport-McMoRan',          b:'Đồng, vàng'},
+      {s:'MP',  n:'MP Materials',             b:'Đất hiếm'},
+      {s:'NEM', n:'Newmont Corporation',       b:'Vàng'},
+      {s:'SHW', n:'Sherwin-Williams',          b:'Sơn phủ'},
+      {s:'STX', n:'Seagate Technology',        b:'Lưu trữ HDD'},
+      {s:'WDC', n:'Western Digital',           b:'Lưu trữ'},
+    ]},
+  {id:'tech',      icon:'💻', name:'CÔNG NGHỆ',                  nameEn:'Technology',              etf:'XLK',  alt:'QQQ/TQQQ',
+    stocks:[
+      {s:'NVDA',n:'NVIDIA Corporation',        b:'GPU / AI'},
+      {s:'AMD', n:'Advanced Micro Devices',    b:'GPU, CPU'},
+      {s:'MU',  n:'Micron Technology',         b:'Bộ nhớ'},
+      {s:'INTC',n:'Intel Corporation',         b:'CPU'},
+      {s:'QCOM',n:'QUALCOMM',                  b:'Chip di động'},
+      {s:'AVGO',n:'Broadcom',                  b:'Chip AI, kết nối'},
+      {s:'MRVL',n:'Marvell Technology',        b:'Chip data center'},
+      {s:'AMAT',n:'Applied Materials',         b:'Thiết bị bán dẫn'},
+      {s:'LRCX',n:'Lam Research',              b:'Thiết bị bán dẫn'},
+      {s:'KLAC',n:'KLA Corporation',           b:'Thiết bị bán dẫn'},
+      {s:'ASML',n:'ASML Holding',              b:'Máy in thạch bản'},
+      {s:'TXN', n:'Texas Instruments',         b:'Chip analog'},
+      {s:'ADI', n:'Analog Devices',            b:'Chip analog'},
+      {s:'ARM', n:'Arm Holdings',              b:'Kiến trúc chip'},
+      {s:'TSM', n:'Taiwan Semiconductor',      b:'Đúc chip'},
+      {s:'SMCI',n:'Super Micro Computer',      b:'Máy chủ AI'},
+      {s:'COHR',n:'Coherent Inc.',             b:'Laser, quang học'},
+      {s:'MSFT',n:'Microsoft Corp.',           b:'Phần mềm, cloud'},
+      {s:'GOOGL',n:'Alphabet (Google)',         b:'Internet, AI'},
+      {s:'META',n:'Meta Platforms',            b:'Mạng xã hội, AI'},
+      {s:'AAPL',n:'Apple Inc.',                b:'Phần cứng, dịch vụ'},
+      {s:'ORCL',n:'Oracle Corporation',        b:'Cloud, DB'},
+      {s:'ADBE',n:'Adobe Inc.',                b:'Phần mềm sáng tạo'},
+      {s:'CRM', n:'Salesforce',                b:'Cloud CRM'},
+      {s:'NOW', n:'ServiceNow',                b:'IT service'},
+      {s:'PANW',n:'Palo Alto Networks',        b:'An ninh mạng'},
+      {s:'CRWD',n:'CrowdStrike',               b:'An ninh mạng'},
+      {s:'INTU',n:'Intuit Inc.',               b:'Phần mềm tài chính'},
+      {s:'SNOW',n:'Snowflake',                 b:'Data cloud'},
+      {s:'PLTR',n:'Palantir Technologies',     b:'Phân tích dữ liệu'},
+      {s:'SHOP',n:'Shopify',                   b:'Thương mại điện tử'},
+      {s:'SPOT',n:'Spotify',                   b:'Streaming nhạc'},
+      {s:'RDDT',n:'Reddit',                    b:'Mạng xã hội'},
+      {s:'EQIX',n:'Equinix',                   b:'Trung tâm dữ liệu'},
+      {s:'NBIS',n:'Nebius Group',              b:'AI cloud'},
+      {s:'CRWV',n:'CoreWeave',                 b:'AI infrastructure'},
+      {s:'OKLO',n:'Oklo Inc.',                 b:'Năng lượng + AI'},
+      {s:'SOUN',n:'SoundHound AI',             b:'AI voice'},
+      {s:'BBAI',n:'BigBear.ai',               b:'AI, phân tích'},
+    ]},
+  {id:'finance',   icon:'🏦', name:'TÀI CHÍNH & TIỀN ĐIỆN TỬ',  nameEn:'Financials & Crypto',     etf:'XLF',  alt:'—',
+    stocks:[
+      {s:'JPM', n:'JPMorgan Chase',            b:'Ngân hàng'},
+      {s:'BAC', n:'Bank of America',           b:'Ngân hàng'},
+      {s:'C',   n:'Citigroup Inc.',            b:'Ngân hàng'},
+      {s:'GS',  n:'Goldman Sachs',             b:'Chứng khoán'},
+      {s:'AXP', n:'American Express',          b:'Thẻ tín dụng'},
+      {s:'MA',  n:'Mastercard',                b:'Thanh toán'},
+      {s:'V',   n:'Visa Inc.',                 b:'Thanh toán'},
+      {s:'PYPL',n:'PayPal Holdings',           b:'Thanh toán'},
+      {s:'COF', n:'Capital One',               b:'Ngân hàng, thẻ'},
+      {s:'BLK', n:'BlackRock Inc.',            b:'Quản lý tài sản'},
+      {s:'SPGI',n:'S&P Global Inc.',           b:'Xếp hạng, dữ liệu'},
+      {s:'SOFI',n:'SoFi Technologies',         b:'Fintech'},
+      {s:'HOOD',n:'Robinhood Markets',         b:'Fintech'},
+      {s:'COIN',n:'Coinbase Global',           b:'Sàn giao dịch Crypto'},
+      {s:'MSTR',n:'MicroStrategy',             b:'Bitcoin holding'},
+      {s:'RIOT',n:'Riot Platforms',            b:'Bitcoin mining'},
+      {s:'MARA',n:'MARA Holdings',             b:'Bitcoin mining'},
+      {s:'IREN',n:'IREN Limited',              b:'Bitcoin mining'},
+      {s:'FUTU',n:'Futu Holdings',             b:'Broker Trung Quốc'},
+    ]},
+  {id:'health',    icon:'🏥', name:'Y TẾ',                       nameEn:'Healthcare',              etf:'XLV',  alt:'—',
+    stocks:[
+      {s:'UNH', n:'UnitedHealth Group',        b:'Bảo hiểm y tế'},
+      {s:'JNJ', n:'Johnson & Johnson',         b:'Dược phẩm, thiết bị'},
+      {s:'LLY', n:'Eli Lilly',                b:'Dược phẩm'},
+      {s:'MRK', n:'Merck & Co.',              b:'Dược phẩm'},
+      {s:'ABBV',n:'AbbVie Inc.',               b:'Dược phẩm'},
+      {s:'NVO', n:'Novo Nordisk',              b:'Dược phẩm GLP-1'},
+      {s:'ISRG',n:'Intuitive Surgical',        b:'Robot phẫu thuật'},
+      {s:'HIMS',n:'Hims & Hers Health',        b:'Telehealth'},
+    ]},
+  {id:'consDisc',  icon:'🛍️', name:'TIÊU DÙNG KHÔNG THIẾT YẾU', nameEn:'Consumer Discretionary',  etf:'XLY',  alt:'—',
+    stocks:[
+      {s:'AMZN',n:'Amazon.com',               b:'TMĐT, cloud'},
+      {s:'TSLA',n:'Tesla',                    b:'Xe điện'},
+      {s:'HD',  n:'Home Depot',               b:'Bán lẻ đồ gia dụng'},
+      {s:'MCD', n:"McDonald's",               b:'Nhà hàng'},
+      {s:'NKE', n:'Nike',                     b:'Giày dép, thời trang'},
+      {s:'SBUX',n:'Starbucks',                b:'Cà phê'},
+      {s:'CVNA',n:'Carvana',                  b:'Bán lẻ ô tô cũ'},
+      {s:'RIVN',n:'Rivian',                   b:'Xe điện'},
+      {s:'ABNB',n:'Airbnb',                   b:'Du lịch'},
+      {s:'CPNG',n:'Coupang',                  b:'TMĐT Hàn Quốc'},
+      {s:'MELI',n:'MercadoLibre',             b:'TMĐT LatAm'},
+      {s:'NFLX',n:'Netflix',                  b:'Streaming'},
+    ]},
+  {id:'consStap',  icon:'🛒', name:'TIÊU DÙNG THIẾT YẾU',        nameEn:'Consumer Staples',        etf:'XLP',  alt:'—',
+    stocks:[
+      {s:'WMT', n:'Walmart Inc.',             b:'Bán lẻ'},
+      {s:'COST',n:'Costco Wholesale',          b:'Bán lẻ thành viên'},
+      {s:'KO',  n:'Coca-Cola Company',         b:'Đồ uống'},
+      {s:'PG',  n:'Procter & Gamble',          b:'Tiêu dùng'},
+      {s:'PM',  n:'Philip Morris',             b:'Thuốc lá'},
+      {s:'MO',  n:'Altria Group',              b:'Thuốc lá'},
+    ]},
+  {id:'comm',      icon:'📡', name:'TRUYỀN THÔNG',               nameEn:'Communication Services',  etf:'XLC',  alt:'—',
+    stocks:[
+      {s:'GOOGL',n:'Alphabet (Google)',         b:'Internet, AI'},
+      {s:'META',n:'Meta Platforms',            b:'Mạng xã hội, AI'},
+      {s:'NFLX',n:'Netflix',                   b:'Streaming'},
+      {s:'DIS', n:'Walt Disney Company',       b:'Giải trí'},
+      {s:'VZ',  n:'Verizon Communications',    b:'Viễn thông'},
+      {s:'T',   n:'AT&T Inc.',                 b:'Viễn thông'},
+    ]},
+  {id:'utilities', icon:'💡', name:'TIỆN ÍCH',                   nameEn:'Utilities',               etf:'XLU',  alt:'—',
+    stocks:[
+      {s:'CEG', n:'Constellation Energy',     b:'Năng lượng hạt nhân'},
+      {s:'NEE', n:'NextEra Energy',           b:'Năng lượng tái tạo'},
+      {s:'DUK', n:'Duke Energy',              b:'Tiện ích điện'},
+    ]},
+  {id:'realestate',icon:'🏢', name:'BẤT ĐỘNG SẢN',              nameEn:'Real Estate',             etf:'XLRE', alt:'—',
+    stocks:[
+      {s:'AVB', n:'AvalonBay Communities',    b:'REIT nhà ở'},
+      {s:'EQIX',n:'Equinix',                  b:'Data center REIT'},
+    ]},
+  {id:'etfindex',  icon:'📊', name:'ETF & CHỈ SỐ (BẢNG 12)',     nameEn:'Indices & ETFs',          etf:'SPY',  alt:'QQQ/TQQQ',
+    stocks:[
+      {s:'SPY', n:'SPDR S&P 500 ETF',          b:'ETF'},
+      {s:'QQQ', n:'Invesco QQQ Trust',          b:'ETF'},
+      {s:'TQQQ',n:'ProShares UltraPro QQQ',     b:'ETF đòn bẩy 3x'},
+      {s:'GLD', n:'SPDR Gold Shares',           b:'ETF vàng'},
+      {s:'SLV', n:'iShares Silver Trust',       b:'ETF bạc'},
+      {s:'PALL',n:'Physical Palladium ETF',     b:'ETF palladium'},
+      {s:'USO', n:'United States Oil Fund',     b:'ETF dầu'},
+      {s:'COPX',n:'Global X Copper Miners',     b:'ETF đồng'},
+      {s:'EWJ', n:'iShares MSCI Japan',         b:'ETF Nhật Bản'},
+      {s:'EWY', n:'iShares MSCI South Korea',   b:'ETF Hàn Quốc'},
+      {s:'IEFA',n:'iShares MSCI EAFE',          b:'ETF quốc tế'},
+    ]},
+];
+
+// ════════════════════════════════════════════════════
+// STATE & UTILS
+// ════════════════════════════════════════════════════
+let D = {};   // sym → data object từ stock_data.json
+let MT = {};  // manual toggle override (expand/collapse)
+const fp = n => n != null ? '$'+n.toFixed(2) : '—';
+const fpc = n => n != null ? (n>0?'+':'')+n.toFixed(2)+'%' : '—';
+const ff = (n,d=3) => n != null ? (n>0?'+':'')+n.toFixed(d) : '—';
+const pc = n => n==null?'neu':n>0.05?'up':n<-0.05?'down':'neu';
+
+function isOpen() {
+  const et = new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
+  const d=et.getDay(), m=et.getHours()*60+et.getMinutes();
+  return d>=1&&d<=5&&m>=570&&m<960;
+}
+
+function getAllTickers() {
+  const s = new Set();
+  VIX_TICKERS.forEach(t=>s.add(t.sym));
+  TABLE12.forEach(t=>s.add(t.sym));
+  SECTOR_ETFS.forEach(e=>s.add(e.sym));
+  SECTORS.forEach(sec=>sec.stocks.forEach(st=>s.add(st.s)));
+  return [...s];
+}
+
+// ════════════════════════════════════════════════════
+// DATA LOADING — đọc từ stock_data.json (pre-computed)
+// ════════════════════════════════════════════════════
+async function loadFromJSON() {
+  // Thử đường dẫn tương đối trước (GitHub Pages), sau đó localhost
+  const paths = ['./stock_data.json', 'http://localhost:5050/stock_data.json'];
+  for (const path of paths) {
+    try {
+      const r = await fetch(path + '?t=' + Date.now(), {cache:'no-store'});
+      if (!r.ok) continue;
+      const json = await r.json();
+      if (!json.tickers) continue;
+      return json;
+    } catch(e) { /* thử đường dẫn tiếp theo */ }
+  }
+  return null;
+}
+
+// ════════════════════════════════════════════════════
+// INDICATORS — computed server-side by fetch_data.py
+// (không cần tính trong browser nữa)
+// ════════════════════════════════════════════════════
+function calcRSI(cl, p=14) {
+  if (cl.length<p+1) return null;
+  let ag=0,al=0;
+  for(let i=1;i<=p;i++){const d=cl[i]-cl[i-1];d>0?ag+=d:al-=d;}
+  ag/=p;al/=p;
+  for(let i=p+1;i<cl.length;i++){
+    const d=cl[i]-cl[i-1];
+    ag=(ag*(p-1)+(d>0?d:0))/p; al=(al*(p-1)+(d<0?-d:0))/p;
+  }
+  return al===0?100:100-100/(1+ag/al);
+}
+
+// ADX(14) using Wilder's smoothing — returns {adx, diP, diN}
+function calcADX(hi, lo, cl, P=14) {
+  const n=cl.length;
+  if(n<P*2+1||!hi||!lo) return {adx:null,diP:null,diN:null};
+  const trA=[],pmA=[],nmA=[];
+  for(let i=1;i<n;i++){
+    if(hi[i]==null||lo[i]==null||cl[i-1]==null){trA.push(0);pmA.push(0);nmA.push(0);continue;}
+    const hl=hi[i]-lo[i], hc=Math.abs(hi[i]-cl[i-1]), lc=Math.abs(lo[i]-cl[i-1]);
+    trA.push(Math.max(hl,hc,lc));
+    const up=hi[i]-hi[i-1], dn=lo[i-1]-lo[i];
+    pmA.push(up>dn&&up>0?up:0);
+    nmA.push(dn>up&&dn>0?dn:0);
+  }
+  if(trA.length<P*2) return {adx:null,diP:null,diN:null};
+  // Initial sums
+  let atr=trA.slice(0,P).reduce((a,b)=>a+b,0);
+  let pdm=pmA.slice(0,P).reduce((a,b)=>a+b,0);
+  let ndm=nmA.slice(0,P).reduce((a,b)=>a+b,0);
+  const safe=(a,b)=>a+b>0?Math.abs(a-b)/(a+b)*100:0;
+  const dxA=[safe(pdm/atr*100,ndm/atr*100)];
+  for(let i=P;i<trA.length;i++){
+    atr=atr-atr/P+trA[i]; pdm=pdm-pdm/P+pmA[i]; ndm=ndm-ndm/P+nmA[i];
+    dxA.push(safe(pdm/atr*100,ndm/atr*100));
+  }
+  let adxV=dxA.slice(0,P).reduce((a,b)=>a+b,0)/P;
+  for(let i=P;i<dxA.length;i++) adxV=(adxV*(P-1)+dxA[i])/P;
+  const diP=atr>0?pdm/atr*100:0, diN=atr>0?ndm/atr*100:0;
+  return {adx:adxV, diP, diN};
+}
+
+// Full indicator calculation from OHLCV bars
+function calcInd(bars) {
+  const n=bars.length;
+  if(n<30) return null;
+  const cl=bars.map(b=>b.c);
+  const hi=bars.map(b=>b.h);
+  const lo=bars.map(b=>b.l);
+  const vo=bars.map(b=>b.v||0);
+
+  // EMA parameters
+  const k12=2/13,k26=2/27,k9=2/10,k50=2/51,k200=2/201;
+  let e12=cl[0],e26=cl[0],e50=cl[0],e200=cl[0];
+  const ml=[],sl=[],e50a=[],e200a=[];
+  let se=cl[0];
+  for(let i=0;i<n;i++){
+    e12=cl[i]*k12+e12*(1-k12);
+    e26=cl[i]*k26+e26*(1-k26);
+    e50=cl[i]*k50+e50*(1-k50);
+    e200=cl[i]*k200+e200*(1-k200);
+    const m=e12-e26; ml.push(m);
+    se=m*k9+se*(1-k9); sl.push(se);
+    e50a.push(e50); e200a.push(e200);
+  }
+
+  const lm=ml[n-1],pm=ml[n-2]??0,ls=sl[n-1],ps=sl[n-2]??0;
+  const lh=lm-ls,ph=pm-ps;
+
+  // Golden / Death Cross — check last 20 bars
+  let goldenCross=false,deathCross=false;
+  const lb=Math.min(20,n-1);
+  for(let i=n-lb;i<n;i++){
+    if(i>0){
+      const p5=e50a[i-1],c5=e50a[i],p2=e200a[i-1],c2=e200a[i];
+      if(p5<=p2&&c5>c2) goldenCross=true;
+      if(p5>=p2&&c5<c2) deathCross=true;
+    }
+  }
+
+  // SMA
+  const s20=n>=20?cl.slice(-20).reduce((a,b)=>a+b,0)/20:null;
+  const s50=n>=50?cl.slice(-50).reduce((a,b)=>a+b,0)/50:null;
+
+  // ADX
+  const {adx,diP,diN}=calcADX(hi,lo,cl,14);
+
+  // Volume vs 65-day avg
+  const vol65=vo.slice(-66,-1).filter(v=>v>0);
+  const avgVol65=vol65.length>0?vol65.reduce((a,b)=>a+b,0)/vol65.length:null;
+  const lastVol=vo[n-1];
+  const volVs65=avgVol65>0?lastVol/avgVol65:null;
+
+  const pr=cl[n-1];
+  return{
+    rsi:calcRSI(cl,14),
+    macd:lm, macdSig:ls, macdHist:lh,
+    macdUp:lh>0&&ph<=0, macdDn:lh<0&&ph>=0,
+    sma20:s20, sma50:s50,
+    ema50:e50a[n-1], ema200:e200a[n-1],
+    goldenCross, deathCross,
+    adx, diP, diN,
+    volVs65,
+    c1W:n>=6?(pr-cl[n-6])/cl[n-6]*100:null,
+    c1M:n>=22?(pr-cl[n-22])/cl[n-22]*100:null,
+  };
+}
+
+// ════════════════════════════════════════════════════
+// SCORING — D1 Strategy (BUY / HOLD / SELL)
+// Max possible: +7.5   Min possible: −8.0
+// BUY ≥ 3.0 | SELL ≤ −3.0 | HOLD = everything else
+// ════════════════════════════════════════════════════
+function calcScore(s) {
+  if(!s.indLoaded) return null;
+  let sc=0;
+  const{rsi,macd,macdHist,macdUp,macdDn,
+        ema50,ema200,goldenCross,deathCross,
+        adx,diP,diN,volVs65,changePercent}=s;
+
+  // EMA50 vs EMA200 — major trend direction (±2.0)
+  if(ema50!=null&&ema200!=null) sc+=ema50>ema200?2.0:-2.0;
+
+  // Golden / Death Cross — recent trend change (±1.5)
+  if(goldenCross) sc+=1.5;
+  if(deathCross)  sc-=1.5;
+
+  // RSI — momentum health
+  if(rsi!=null){
+    if(rsi>=30&&rsi<=70) sc+=1.0;   // healthy zone: +1.0
+    else if(rsi>70)      sc-=1.5;   // overbought: −1.5
+    // rsi<30 = oversold (ambiguous — no change)
+  }
+
+  // MACD — momentum direction + crossover confirmation
+  if(macdHist!=null&&macd!=null){
+    if(macd>0&&macdHist>0) sc+=1.0;   // both positive
+    else if(macd<0&&macdHist<0) sc-=1.0;  // both negative
+    if(macdUp) sc+=0.5;   // fresh bullish crossover
+    if(macdDn) sc-=0.5;   // fresh bearish crossover
+  }
+
+  // ADX — trend strength confirmation (±0.5)
+  if(adx!=null&&diP!=null&&diN!=null&&adx>25)
+    sc+=diP>diN?0.5:-0.5;
+
+  // Volume vs 65d avg — confirms price move (±1.0)
+  if(volVs65!=null&&changePercent!=null){
+    if(volVs65>1.1&&changePercent>0) sc+=1.0;
+    else if(volVs65>1.1&&changePercent<0) sc-=1.0;
+  }
+
+  return Math.round(sc*10)/10;
+}
+
+function calcSignal(sc) {
+  if(sc==null) return 'LOADING';
+  if(sc>=3.0)  return 'BUY';
+  if(sc<=-3.0) return 'SELL';
+  return 'HOLD';
+}
+
+// ════════════════════════════════════════════════════
+// RENDER HELPERS
+// ════════════════════════════════════════════════════
+function sigH(sig) {
+  const ic={BUY:'▲',SELL:'▼',HOLD:'◆',LOADING:''};
+  return sig==='LOADING'
+    ?`<span class="sig sig-LOAD"><span class="spin"></span></span>`
+    :`<span class="sig sig-${sig}">${ic[sig]||''} ${sig}</span>`;
+}
+
+function rsiH(rv) {
+  if(rv==null) return `<span class="spin"></span>`;
+  const pct=Math.min(100,Math.max(0,rv));
+  const cls=rv<35?'rlo':rv>65?'rhi':'rmi';
+  const col=rv<35?'var(--green)':rv>65?'var(--red)':'var(--muted)';
+  return `<div class="rw"><span class="rn" style="color:${col}">${rv.toFixed(0)}</span>
+    <div class="rb"><div class="rf ${cls}" style="width:${pct}%"></div></div></div>`;
+}
+
+function scoreH(s) {
+  if(s==null) return `<span class="spin"></span>`;
+  const c=s>=3.0?'sp':s<=-3.0?'sn':'sz';
+  const disp=(s>0?'+':'')+s.toFixed(1);
+  return `<span class="scr ${c}">${disp}</span>`;
+}
+
+function macdH(d) {
+  if(!d||d.macdHist==null) return `<span class="spin"></span>`;
+  const{macdHist:h,macdUp:u,macdDn:dn}=d;
+  const col=h>0?'var(--green)':'var(--red)';
+  const ico=u?' ▲':dn?' ▼':'';
+  const fw=(u||dn)?'font-weight:900':'';
+  return `<span style="color:${col};${fw}">${ff(h,3)}${ico}</span>`;
+}
+
+function gd(sym){return D[sym]||{symbol:sym,name:sym,loaded:false,indLoaded:false,signal:'LOADING',score:null};}
+
+// ════════════════════════════════════════════════════
+// RENDER: MONITORING
+// ════════════════════════════════════════════════════
+function vixLevelInfo(v){
+  if(v==null) return{txt:'…',col:'var(--muted)',desc:''};
+  if(v<12)  return{txt:'⚡ Cực Thấp', col:'var(--green)', desc:'Ổn định — tốt để mua'};
+  if(v<16)  return{txt:'✅ Thấp',     col:'var(--green)', desc:'Volatility thấp'};
+  if(v<20)  return{txt:'📊 Bình thường',col:'var(--blue)',desc:'Biến động vừa phải'};
+  if(v<25)  return{txt:'⚠️ Cao',      col:'var(--yel)',  desc:'Thị trường lo ngại'};
+  if(v<30)  return{txt:'🔥 Rất Cao',  col:'var(--yel)',  desc:'Biến động mạnh'};
+  if(v<40)  return{txt:'🚨 Khủng hoảng',col:'var(--red)',desc:'Panic — tránh mua mới'};
+  return        {txt:'💀 Hoảng loạn', col:'var(--red)',  desc:'Extreme fear'};
+}
+
+function termInfo(v,vx){
+  if(v==null||vx==null) return{txt:'—',col:'var(--muted)',desc:'Không có dữ liệu VXMT'};
+  const diff=(vx-v).toFixed(2);
+  if(v<vx) return{txt:`CONTANGO  (VXMT – VIX = +${diff})`, col:'var(--green)',desc:'Bình thường: short-term < long-term'};
+  return{txt:`BACKWARDATION  (VIX – VXMT = +${(v-vx).toFixed(2)})`,col:'var(--red)',desc:'Căng thẳng: short-term > long-term'};
+}
+
+function riskInfo(v,vx){
+  if(v==null) return{txt:'—',col:'var(--muted)',desc:''};
+  const bkwd=vx!=null&&v>vx;
+  if(v<15&&!bkwd)  return{txt:'RISK-ON ✅',   col:'var(--green)',desc:'Điều kiện tốt để mua theo xu hướng'};
+  if(v<20&&!bkwd)  return{txt:'NEUTRAL ⚖️',   col:'var(--blue)', desc:'Thận trọng — theo dõi thêm trước khi vào lệnh'};
+  if(v<25||bkwd)   return{txt:'RISK-OFF ⚠️',  col:'var(--yel)',  desc:'Hạn chế mở vị thế mới — giảm rủi ro'};
+  if(v<35)         return{txt:'DEFENSIVE 🛡️', col:'var(--red)',  desc:'Phòng thủ — ưu tiên bảo toàn vốn'};
+  return               {txt:'CRISIS 🚨',       col:'var(--red)',  desc:'Không mở vị thế mới — cân nhắc thoát lệnh'};
+}
+
+function renderMonitoring(){
+  const vixD=gd('^VIX'), vxmtD=gd('^VXMT'), vixyD=gd('VIXY');
+  const vixV=vixD.price, vxmtV=vxmtD.price;
+  const lv=vixLevelInfo(vixV);
+  const tr=termInfo(vixV,vxmtV);
+  const ri=riskInfo(vixV,vxmtV);
+  const prevNote=!isOpen()&&vixV!=null?'<span class="b12-prev-tag">Đóng cửa</span>':'';
+
+  const cards=VIX_TICKERS.map(t=>{
+    const d=gd(t.sym);
+    const pval=d.price;
+    const lvi=t.role==='spot'?vixLevelInfo(pval):{txt:'',col:'var(--muted)',desc:''};
+    return `<div class="mon-card">
+      <div class="mon-ticker">${t.disp}</div>
+      <div class="mon-name">${t.name}</div>
+      <div class="mon-price ${pc(d.changePercent)}">${pval!=null?pval.toFixed(2):'—'}</div>
+      <div class="mon-chg ${pc(d.changePercent)}">${fpc(d.changePercent)}</div>
+      ${t.role==='spot'?`<div class="mon-level" style="color:${lv.col}">${lv.txt}</div><div class="mon-ldesc">${lv.desc}</div>`:''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('monCont').innerHTML=`<div class="mon-wrap">
+    <div class="mon-grid">${cards}</div>
+    <div class="mon-sum">
+      <div class="mon-stat">
+        <div class="mon-slbl">⏳ Futures Curve (VIX vs VXMT)</div>
+        <div class="mon-sval" style="color:${tr.col}">${tr.txt}</div>
+        <div class="mon-sdesc">${tr.desc}</div>
+      </div>
+      <div class="mon-stat">
+        <div class="mon-slbl">📊 Market Risk Level</div>
+        <div class="mon-sval" style="color:${ri.col}">${ri.txt}</div>
+        <div class="mon-sdesc">${ri.desc}</div>
+      </div>
+      <div class="mon-stat">
+        <div class="mon-slbl">💡 Khuyến nghị</div>
+        <div class="mon-sval" style="font-size:12px;color:var(--tx)">${vixV==null?'Đang tải dữ liệu VIX…':
+          vixV<15&&vxmtV&&vixV<vxmtV?'Thị trường ổn định — có thể BUY theo tín hiệu B1-B3':
+          vixV<20?'Cân nhắc kỹ trước khi mở vị thế mới':
+          vixV<25?'Hạn chế mua mới — ưu tiên theo dõi':
+          vixV<35?'Chờ VIX hạ xuống dưới 25 trước khi giao dịch':
+          'Không giao dịch — bảo toàn vốn là ưu tiên'}</div>
+        <div class="mon-sdesc">VIX: ${vixV!=null?vixV.toFixed(2):'…'} &bull; VXMT: ${vxmtV!=null?vxmtV.toFixed(2):'N/A'}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════
+// RENDER: BẢNG 12
+// ════════════════════════════════════════════════════
+function renderB12(){
+  const prev=!isOpen();
+  document.getElementById('b12Grid').innerHTML=TABLE12.map(t=>{
+    const d=gd(t.sym);
+    const sig=d.signal||'LOADING';
+    const bc=sig==='BUY'?'var(--gbd)':sig==='SELL'?'var(--rbd)':sig==='HOLD'?'var(--bbd)':'var(--bd)';
+    const sc=d.score;
+    return `<div class="b12-card" style="border-color:${bc}">
+      <div class="b12-sig">${sigH(sig)}</div>
+      <div class="b12-type">${t.type}</div>
+      <div class="b12-sym">${t.disp}</div>
+      <div class="b12-name" title="${t.name}">${t.name}</div>
+      <div class="b12-price ${pc(d.changePercent)}">${fp(d.price)}</div>
+      <div class="b12-chg ${pc(d.changePercent)}">${fpc(d.changePercent)}</div>
+      <div class="b12-meta">
+        <span class="b12-tag">RSI ${d.rsi!=null?d.rsi.toFixed(0):'…'}</span>
+        <span class="b12-tag" style="color:${sc!=null?(sc>=3?'var(--green)':sc<=-3?'var(--red)':'var(--blue)'):'var(--muted)'}">
+          Sc&nbsp;${sc!=null?(sc>0?'+':'')+sc.toFixed(1):'…'}
+        </span>
+        ${d.ema50!=null&&d.ema200!=null?`<span class="b12-tag" style="color:${d.ema50>d.ema200?'var(--green)':'var(--red)'}">${d.ema50>d.ema200?'E50>200':'E50<200'}</span>`:''}
+      </div>
+      ${prev&&d.price!=null?'<div class="b12-prev-tag">Đóng cửa</div>':''}
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════
+// RENDER: ETF TABLE
+// ════════════════════════════════════════════════════
+function renderEtfTbl(){
+  document.getElementById('etfTbody').innerHTML=SECTOR_ETFS.map(e=>{
+    const d=gd(e.sym);
+    return `<tr>
+      <td><span style="margin-right:5px">${e.icon}</span><b>${e.sname}</b></td>
+      <td><div class="sc"><span class="sm">${e.sym}</span><span class="ss">${e.name}</span></div></td>
+      <td class="num pv">${fp(d.price)}</td>
+      <td class="num ${pc(d.changePercent)}">${fpc(d.changePercent)}</td>
+      <td class="num ${pc(d.c1W)}">${fpc(d.c1W)}</td>
+      <td class="num ${pc(d.c1M)}">${fpc(d.c1M)}</td>
+      <td class="num">${rsiH(d.rsi)}</td>
+      <td class="num">${macdH(d)}</td>
+      <td class="num">${scoreH(d.score)}</td>
+      <td>${sigH(d.signal||'LOADING')}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════
+// RENDER: SECTORS
+// ════════════════════════════════════════════════════
+function renderSectors(){
+  const cont=document.getElementById('secCont');
+  cont.innerHTML=SECTORS.map(sec=>{
+    const ed=gd(sec.etf);
+    const sig=ed.signal||'LOADING';
+    // Auto-expand for BUY or HOLD; collapse only for SELL
+    const autoExp=sig==='BUY'||sig==='HOLD';
+    const isExp=MT[sec.id]!==undefined?MT[sec.id]:autoExp;
+    const cardCls=sig==='BUY'?'sec-buy':sig==='SELL'?'sec-sell':sig==='HOLD'?'sec-hold':'';
+    let bodyHtml='';
+    if(sig==='LOADING'){
+      bodyHtml=`<div class="coll-hint"><span class="spin"></span>&nbsp;Đang tải tín hiệu ETF ${sec.etf}…</div>`;
+    } else if(!isExp){
+      bodyHtml=`<div class="coll-hint">📉 ETF <b>${sec.etf}</b> = <b>${sig}</b> — Tín hiệu SELL: tránh mở vị thế mới. Nhấp tiêu đề để xem thủ công.</div>`;
+    } else {
+      bodyHtml=stockTblH(sec);
+    }
+    return `<div class="sec-card ${cardCls}" id="sc-${sec.id}">
+      <div class="sec-hd" onclick="toggleSec('${sec.id}')">
+        <span class="sec-ico">${sec.icon}</span>
+        <div class="sec-ttl"><h3>${sec.name}</h3><p>${sec.nameEn} &bull; ${sec.stocks.length} cổ phiếu &bull; Alt ETF: ${sec.alt}</p></div>
+        <div class="sec-etf">
+          <span class="etf-chip">${sec.etf}</span>
+          ${sigH(sig)}
+          ${autoExp&&sig!=='LOADING'?'<span class="auto-lbl">✓ Auto-mở</span>':''}
+        </div>
+        <span class="chev ${isExp?'open':''}" id="chev-${sec.id}">›</span>
+      </div>
+      <div class="sec-body ${isExp?'exp':''}" id="bd-${sec.id}">${bodyHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function stockTblH(sec){
+  return `<div class="stbl-wrap"><table class="stbl">
+    <thead><tr>
+      <th class="num">#</th><th>Mã</th><th>Phân ngành</th>
+      <th class="num">Giá</th><th class="num">1D%</th><th class="num">1W%</th>
+      <th class="num">1M%</th><th class="num">RSI</th>
+      <th class="num">MACD</th><th class="num">Score</th><th>Tín hiệu</th>
+    </tr></thead>
+    <tbody>${sec.stocks.map((st,i)=>{
+      const d=gd(st.s);
+      return `<tr>
+        <td class="idx">${i+1}</td>
+        <td><div class="sc"><span class="sm">${st.s}</span><span class="sub-lbl">${st.n}</span></div></td>
+        <td style="color:var(--muted);font-size:11px">${st.b}</td>
+        <td class="num pv">${fp(d.price)}</td>
+        <td class="num ${pc(d.changePercent)}">${fpc(d.changePercent)}</td>
+        <td class="num ${pc(d.c1W)}">${fpc(d.c1W)}</td>
+        <td class="num ${pc(d.c1M)}">${fpc(d.c1M)}</td>
+        <td class="num">${rsiH(d.rsi)}</td>
+        <td class="num">${macdH(d)}</td>
+        <td class="num">${scoreH(d.score)}</td>
+        <td>${sigH(d.signal||'LOADING')}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+// ════════════════════════════════════════════════════
+// TOGGLE
+// ════════════════════════════════════════════════════
+function toggleSec(id){
+  const body=document.getElementById('bd-'+id);
+  const chev=document.getElementById('chev-'+id);
+  const isExp=body.classList.contains('exp');
+  MT[id]=!isExp;
+  if(!isExp){
+    const sec=SECTORS.find(s=>s.id===id);
+    if(sec) body.innerHTML=stockTblH(sec);
+    body.classList.add('exp'); chev.classList.add('open');
+  } else {
+    body.classList.remove('exp'); chev.classList.remove('open');
+  }
+}
+
+// ════════════════════════════════════════════════════
+// RENDER ALL
+// ════════════════════════════════════════════════════
+function renderAll(){renderMonitoring();renderB12();renderEtfTbl();renderSectors();}
+
+// ════════════════════════════════════════════════════
+// LOAD FLOW — đọc từ stock_data.json
+// ════════════════════════════════════════════════════
+function populateD(json) {
+  const tickers = json.tickers || {};
+  for (const [sym, t] of Object.entries(tickers)) {
+    D[sym] = Object.assign({}, t, {indLoaded: true, loaded: true});
+  }
+  // Ghi nhận thời gian cập nhật từ JSON
+  if (json.updated) {
+    const dt = new Date(json.updated);
+    const local = dt.toLocaleString('vi-VN', {timeZone:'Asia/Ho_Chi_Minh',
+      month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+    document.getElementById('lastUpdate').textContent = '📊 Data: ' + local;
+  }
+}
+
+async function startRefresh() {
+  const btn = document.getElementById('btnRefresh');
+  const eb  = document.getElementById('errBanner');
+  const prog = document.getElementById('progArea');
+  btn.textContent = '⏳ Đang tải…'; btn.disabled = true;
+  eb.style.display = 'none';
+  prog.style.display = 'block';
+
+  const json = await loadFromJSON();
+  prog.style.display = 'none';
+
+  if (!json) {
+    eb.style.display = 'block';
+    eb.textContent = '❌ Không đọc được stock_data.json. '
+      + 'Hãy chạy fetch_data.py hoặc đợi GitHub Actions cập nhật lần đầu.';
+    btn.textContent = '🔄 Làm mới'; btn.disabled = false;
+    return;
+  }
+
+  D = {}; MT = {};
+  populateD(json);
+  renderAll();
+  btn.textContent = '🔄 Làm mới'; btn.disabled = false;
+}
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+function updateMkt(){
+  const el=document.getElementById('mktStatus');
+  const pn=document.getElementById('prevPriceNote');
+  if(isOpen()){
+    el.className='mkt mkt-o';el.textContent='🟢 Thị trường mở';
+    pn.style.display='none';
+  } else {
+    el.className='mkt mkt-c';el.textContent='🔴 Thị trường đóng';
+    pn.style.display='inline-block';
+  }
+}
+updateMkt();
+startRefresh();
+// Tự làm mới mỗi 5 phút (JSON nhẹ, không tốn tài nguyên)
+setInterval(startRefresh, 5*60*1000);
+setInterval(updateMkt, 60*1000);
+</script>
+</body>
+</html>
