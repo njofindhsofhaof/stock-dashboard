@@ -255,8 +255,14 @@ def main():
         'errors':  errors,
         'tickers': data,
     }
+    # Thay NaN/Inf bằng null để JSON hợp lệ (browser không đọc được NaN)
+    import re
+    raw = json.dumps(output, ensure_ascii=False, separators=(',', ':'), allow_nan=True)
+    raw = re.sub(r'\bNaN\b', 'null', raw)
+    raw = re.sub(r'\bInfinity\b', 'null', raw)
+    raw = re.sub(r'\b-Infinity\b', 'null', raw)
     with open('stock_data.json', 'w', encoding='utf-8') as f:
-        json.dump(output, f, ensure_ascii=False, separators=(',', ':'))
+        f.write(raw)
 
     elapsed = time.time()-start
     ok = len(data)-len(errors)
